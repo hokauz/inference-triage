@@ -1,0 +1,8 @@
+interface:
+  display_name: 'HN Commit Message'
+  short_description: 'Draft Conventional Commit or PR messages'
+  default_prompt: 'Use $hn-commit to draft a concise Conventional Commit message from the staged diff.'
+  brand_color: '#0F766E'
+
+policy:
+  allow_implicit_invocation: true

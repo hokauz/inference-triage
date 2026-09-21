@@ -1,0 +1,13 @@
+/var/*
+!/var/.gitkeep
+
+/artifacts/*
+!/artifacts/.gitkeep
+
+/datasets/source/*
+!/datasets/source/.gitkeep
+
+node_modules/
+.venv/
+__pycache__/
+*.py[cod]
