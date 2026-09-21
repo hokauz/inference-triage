@@ -6,6 +6,9 @@
 
 /datasets/source/*
 !/datasets/source/.gitkeep
+!/datasets/source/finguard/
+datasets/source/finguard/*
+!/datasets/source/finguard/README.md
 
 node_modules/
 .venv/

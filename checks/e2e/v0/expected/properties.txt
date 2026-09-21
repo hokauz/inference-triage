@@ -1,0 +1,6 @@
+benchmark_run.status
+benchmark_run.dataset_hash
+benchmark_run.config_hash
+sample_executions.count == input.count
+sample_executions[*].id
+sample_executions[*].decision

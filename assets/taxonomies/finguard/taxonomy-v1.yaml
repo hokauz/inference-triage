@@ -1,0 +1,46 @@
+version: finguard-taxonomy-v1
+categories:
+  - Cobrança Indevida
+  - Atendimento
+  - Fraude/Segurança
+  - Produto/Serviço
+  - Cancelamento
+  - Outros
+products:
+  - Cartão de Crédito
+  - Conta Corrente
+  - Empréstimo
+  - Investimentos
+  - Seguros
+  - Não Identificado
+sentiments:
+  - Positivo
+  - Neutro
+  - Negativo
+  - Crítico
+urgency:
+  - Baixa
+  - Média
+  - Alta
+  - Crítica
+risk_levels:
+  - Baixo
+  - Médio
+  - Alto
+  - Crítico
+channels:
+  - SAC
+  - Ouvidoria
+  - Banco Central
+  - Procon
+  - Redes Sociais
+statuses:
+  - Aberta
+  - Em análise
+  - Resolvida
+threat_types:
+  - pii_present
+  - prompt_injection
+  - exfiltration_request
+  - unauthorized_data_access
+  - external_exfiltration

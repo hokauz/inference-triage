@@ -1,0 +1,22 @@
+id: finguard
+version: finguard-pack-v1
+source: Future Minds / FinGuard desafio
+ingestion:
+  schema: assets/ingestion/schemas/finguard-reclamacoes-v1.md
+  mapping: assets/ingestion/mappings/finguard-csv-v1.md
+  normalizer: assets/ingestion/normalizers/finguard-v1.md
+taxonomy: assets/taxonomies/finguard/taxonomy-v1.yaml
+policies:
+  - id: POL-SAC-001
+    version: 2.0
+    path: assets/policies/finguard/POL-SAC-001-v2.0.md
+prompts:
+  decision: assets/prompts/finguard/decision-v1.md
+  risk_review: assets/prompts/finguard/risk-review-v1.md
+  summary: assets/prompts/finguard/summary-v1.md
+datasets:
+  official: datasets/source/finguard/dataset_finguard_desafio_3.csv
+  official_sha256: 9eeee12207acc207e8595063819039d588a8ab2277d1611756a5f0a34b4cfe37
+  smoke: datasets/fixtures/finguard/reclamacoes-smoke.csv
+  smoke_sha256: 435c5e57ad01bee17871d9016f04a7ab712b49b19cba9cbb9264e8eac62917c3
+  gold: datasets/gold/finguard/

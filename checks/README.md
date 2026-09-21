@@ -11,4 +11,6 @@ de uma implementação específica.
 
 O E2E deve ser determinístico usando mocks. Integrações com Laya real ficam em
 smoke checks separados. `scripts/` será apenas a camada de entrada para rodar
-estes checks.
+estes checks. A entrada agregada é `./scripts/check v0`; os checks de estrutura e
+contratos podem ser executados isoladamente enquanto o runner ainda está sendo
+construído.

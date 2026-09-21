@@ -1,0 +1,151 @@
+#!/bin/sh
+
+set -eu
+
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+
+fail() {
+  printf 'FAIL: %s\n' "$1" >&2
+  return 1
+}
+
+pass() {
+  printf 'PASS: %s\n' "$1"
+}
+
+require_dir() {
+  if [ ! -d "$ROOT/$1" ]; then
+    fail "missing directory: $1"
+    return 1
+  fi
+}
+
+require_file() {
+  if [ ! -f "$ROOT/$1" ]; then
+    fail "missing file: $1"
+    return 1
+  fi
+}
+
+check_structure() {
+  dirs='platform/contracts platform/database runtimes/typescript/src/core runtimes/typescript/src/runner/composer runtimes/typescript/src/adapters runtimes/typescript/src/commands runtimes/typescript/test runtimes/python/src/core runtimes/python/src/runner/composer runtimes/python/src/adapters runtimes/python/src/commands runtimes/python/test assets/ingestion/schemas assets/ingestion/mappings assets/ingestion/normalizers assets/policies/finguard assets/prompts/finguard assets/taxonomies/finguard assets/packs/finguard experiments/compositions experiments/benchmarks datasets/source/finguard datasets/curated/finguard datasets/gold/finguard datasets/fixtures/finguard interfaces/api interfaces/web interfaces/cli interfaces/exporters compose/benchmarks checks/structure checks/contracts checks/e2e/v0/fixtures checks/e2e/v0/expected checks/resources'
+
+  for dir in $dirs; do
+    require_dir "$dir" || return 1
+  done
+
+  require_file README.md || return 1
+  require_file concept/initial.md || return 1
+  require_file checks/README.md || return 1
+  require_file compose/README.md || return 1
+  pass 'repository structure'
+}
+
+check_contracts() {
+  require_file checks/e2e/v0/README.md || return 1
+  require_file checks/contracts/v0.md || return 1
+  require_file checks/e2e/v0/fixtures/complaints.jsonl || return 1
+  require_file checks/e2e/v0/fixtures/security.jsonl || return 1
+  require_file checks/e2e/v0/expected/properties.txt || return 1
+  require_file checks/e2e/v0/expected/security-properties.txt || return 1
+  require_file assets/packs/finguard/pack.yaml || return 1
+  require_file assets/taxonomies/finguard/taxonomy-v1.yaml || return 1
+  require_file assets/policies/finguard/POL-SAC-001-v2.0.md || return 1
+  require_file platform/contracts/report-data-classes-v1.md || return 1
+
+  input_count=$(grep -cve '^[[:space:]]*$' "$ROOT/checks/e2e/v0/fixtures/complaints.jsonl" || true)
+  if [ "$input_count" -lt 1 ]; then
+    fail 'V0 fixture must contain at least one non-empty input'
+    return 1
+  fi
+
+  pass "V0 contracts, FinGuard assets and fixtures ($input_count inputs)"
+}
+
+check_e2e_v0() {
+  if [ -z "${V0_COMMAND:-}" ]; then
+    fail 'V0_COMMAND is not set; implement a runner before enabling the V0 E2E check'
+    printf '      expected usage: V0_COMMAND="..." %s e2e:v0\n' "$0" >&2
+    return 1
+  fi
+
+  output_dir=$(mktemp -d "${TMPDIR:-/tmp}/inference-triage-v0.XXXXXX")
+  cleanup() {
+    rm -rf "$output_dir"
+  }
+  trap cleanup EXIT HUP INT TERM
+
+  export V0_INPUT="$ROOT/checks/e2e/v0/fixtures/complaints.jsonl"
+  export V0_OUTPUT_DIR="$output_dir"
+
+  if ! sh -c "$V0_COMMAND"; then
+    fail 'V0 runner command'
+    return 1
+  fi
+
+  require_output="$output_dir/benchmark_run.json"
+  sample_output="$output_dir/sample_executions.jsonl"
+  if [ ! -f "$require_output" ]; then
+    fail 'V0 runner did not create benchmark_run.json'
+    return 1
+  fi
+  if [ ! -f "$sample_output" ]; then
+    fail 'V0 runner did not create sample_executions.jsonl'
+    return 1
+  fi
+
+  for property in status dataset_hash config_hash; do
+    if ! grep -q "\"$property\"" "$require_output"; then
+      fail "benchmark_run.json is missing property: $property"
+      return 1
+    fi
+  done
+
+  input_count=$(grep -cve '^[[:space:]]*$' "$V0_INPUT" || true)
+  output_count=$(grep -cve '^[[:space:]]*$' "$sample_output" || true)
+  if [ "$input_count" -ne "$output_count" ]; then
+    fail "sample count mismatch: input=$input_count output=$output_count"
+    return 1
+  fi
+
+  pass 'V0 end-to-end output contract'
+}
+
+usage() {
+  printf '%s\n' \
+    'usage: scripts/check {structure|contracts|e2e:v0|v0|all}' \
+    '' \
+    'v0 requires V0_COMMAND. The command receives:' \
+    '  V0_INPUT      path to the deterministic JSONL fixture' \
+    '  V0_OUTPUT_DIR directory where benchmark_run.json and sample_executions.jsonl must be written'
+}
+
+command=${1:-all}
+case "$command" in
+  structure)
+    check_structure
+    ;;
+  contracts)
+    check_contracts
+    ;;
+  e2e:v0)
+    check_e2e_v0
+    ;;
+  v0)
+    check_structure
+    check_contracts
+    check_e2e_v0
+    ;;
+  all)
+    check_structure
+    check_contracts
+    check_e2e_v0
+    ;;
+  -h|--help|help)
+    usage
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac

@@ -282,6 +282,15 @@ O comando agregador futuro será equivalente a:
 ./scripts/check v0
 ```
 
+O mesmo fluxo pode ser executado pelo `Makefile`:
+
+```bash
+make check-structure
+make check-contracts
+make check-e2e-v0 V0_COMMAND="comando-do-runner"
+make check V0_COMMAND="comando-do-runner"
+```
+
 Ele deverá verificar estrutura, contratos, build, execução E2E, persistência
 SQLite, views de report, outputs e códigos de saída. Checks específicos poderão
 ser executados isoladamente para acelerar o desenvolvimento.
@@ -385,6 +394,7 @@ evidência confiável sobre a composição que está sendo testada.
 
 ## Referências
 
+- [Mapeamento do FinGuard](concept/finguard-source-map.md)
 - [FinGuard desafio](https://github.com/gabiramires/FinGuard_desafio)
 - [Laya](https://github.com/NandhaKishorM/laya)
 - [Laya MLX](https://github.com/mizorewww/laya-mlx)
