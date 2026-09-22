@@ -1,0 +1,21 @@
+{
+  "inputCount": 500,
+  "acceptedCount": 500,
+  "rejectedCount": 0,
+  "missingByField": {
+    "id": 0,
+    "data_reclamacao": 0,
+    "canal": 0,
+    "texto_reclamacao": 0,
+    "produto": 122,
+    "status": 0
+  },
+  "unexpectedValues": {
+    "channel": [],
+    "product": [],
+    "status": []
+  },
+  "rejectedRows": [],
+  "data_class": "internal_restricted",
+  "dataset_hash": "9eeee12207acc207e8595063819039d588a8ab2277d1611756a5f0a34b4cfe37"
+}

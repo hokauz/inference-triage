@@ -1,0 +1,19 @@
+services:
+  v0:
+    build:
+      context: ../../..
+      dockerfile: compose/benchmarks/v0-mock/Dockerfile
+    network_mode: none
+    cpus: "1.0"
+    mem_limit: 512m
+    environment:
+      INFERENCE_TRIAGE_EXECUTION_PROFILE: v0-finguard
+      INFERENCE_TRIAGE_CPU_LIMIT: "1"
+      INFERENCE_TRIAGE_MEMORY_LIMIT_MIB: "512"
+      INFERENCE_TRIAGE_CONCURRENCY: "1"
+      INFERENCE_TRIAGE_IMAGE_DIGEST: ${INFERENCE_TRIAGE_IMAGE_DIGEST:-unknown}
+    volumes:
+      - ../../../datasets/source/finguard:/inputs:ro
+      - ../../../artifacts/v0-finguard:/outputs
+    command:
+      ["run", "--input", "/inputs/dataset_finguard_desafio_3.csv", "--output-dir", "/outputs/full", "--pack", "assets/packs/finguard/pack.yaml", "--mode", "mock"]

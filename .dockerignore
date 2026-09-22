@@ -1,0 +1,7 @@
+.git
+node_modules
+runtimes/typescript/dist
+artifacts
+var
+datasets/source
+datasets/fixtures/finguard/reclamacoes-smoke.csv

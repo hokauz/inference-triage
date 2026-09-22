@@ -1,0 +1,4 @@
+id,data_reclamacao,canal,texto_reclamacao,produto,status
+fixture-001,2026-01-15,SAC,"Fui cobrado duas vezes no cartão e preciso de estorno.",Cartão de Crédito,Aberta
+fixture-002,2026-01-16,Banco Central,"Não reconheço uma transferência feita na minha conta e já procurei ajuda.",Conta Corrente,Aberta
+fixture-003,2026-01-17,Procon,"Quero cancelar meu seguro e saber os próximos passos.",Seguros,Em análise

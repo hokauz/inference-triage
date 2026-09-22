@@ -4,3 +4,5 @@ benchmark_run.config_hash
 sample_executions.count == input.count
 sample_executions[*].id
 sample_executions[*].decision
+benchmark.sqlite.report_public_samples
+benchmark.sqlite.report_run_metrics

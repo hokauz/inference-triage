@@ -35,17 +35,24 @@ check_structure() {
   done
 
   require_file README.md || return 1
+  require_file runtimes/typescript/package.json || return 1
+  require_file runtimes/typescript/bun.lock || return 1
   require_file concept/initial.md || return 1
   require_file checks/README.md || return 1
   require_file compose/README.md || return 1
+  require_file runtimes/typescript/tsconfig.json || return 1
+  require_file platform/database/migrations/0001_v0.sql || return 1
+  require_file compose/benchmarks/v0-mock/Dockerfile || return 1
+  require_file compose/benchmarks/v0-mock/compose.yaml || return 1
+  require_file compose/benchmarks/v0-finguard/compose.yaml || return 1
   pass 'repository structure'
 }
 
 check_contracts() {
   require_file checks/e2e/v0/README.md || return 1
   require_file checks/contracts/v0.md || return 1
-  require_file checks/e2e/v0/fixtures/complaints.jsonl || return 1
-  require_file checks/e2e/v0/fixtures/security.jsonl || return 1
+  require_file checks/e2e/v0/fixtures/complaints.csv || return 1
+  require_file checks/e2e/v0/fixtures/security.csv || return 1
   require_file checks/e2e/v0/expected/properties.txt || return 1
   require_file checks/e2e/v0/expected/security-properties.txt || return 1
   require_file assets/packs/finguard/pack.yaml || return 1
@@ -53,7 +60,7 @@ check_contracts() {
   require_file assets/policies/finguard/POL-SAC-001-v2.0.md || return 1
   require_file platform/contracts/report-data-classes-v1.md || return 1
 
-  input_count=$(grep -cve '^[[:space:]]*$' "$ROOT/checks/e2e/v0/fixtures/complaints.jsonl" || true)
+  input_count=$(($(grep -cve '^[[:space:]]*$' "$ROOT/checks/e2e/v0/fixtures/complaints.csv" || true) - 1))
   if [ "$input_count" -lt 1 ]; then
     fail 'V0 fixture must contain at least one non-empty input'
     return 1
@@ -63,48 +70,58 @@ check_contracts() {
 }
 
 check_e2e_v0() {
-  if [ -z "${V0_COMMAND:-}" ]; then
-    fail 'V0_COMMAND is not set; implement a runner before enabling the V0 E2E check'
-    printf '      expected usage: V0_COMMAND="..." %s e2e:v0\n' "$0" >&2
-    return 1
-  fi
-
   output_dir=$(mktemp -d "${TMPDIR:-/tmp}/inference-triage-v0.XXXXXX")
   cleanup() {
     rm -rf "$output_dir"
   }
   trap cleanup EXIT HUP INT TERM
 
-  export V0_INPUT="$ROOT/checks/e2e/v0/fixtures/complaints.jsonl"
-  export V0_OUTPUT_DIR="$output_dir"
-
-  if ! sh -c "$V0_COMMAND"; then
-    fail 'V0 runner command'
+  if ! (cd "$ROOT/runtimes/typescript" && bun run build); then
+    fail 'TypeScript build'
     return 1
   fi
 
-  require_output="$output_dir/benchmark_run.json"
-  sample_output="$output_dir/sample_executions.jsonl"
-  if [ ! -f "$require_output" ]; then
-    fail 'V0 runner did not create benchmark_run.json'
-    return 1
-  fi
-  if [ ! -f "$sample_output" ]; then
-    fail 'V0 runner did not create sample_executions.jsonl'
-    return 1
-  fi
-
-  for property in status dataset_hash config_hash; do
-    if ! grep -q "\"$property\"" "$require_output"; then
-      fail "benchmark_run.json is missing property: $property"
+  run_fixture() {
+    fixture="$1"
+    target="$output_dir/$2"
+    mkdir -p "$target"
+    if ! (cd "$ROOT" && node runtimes/typescript/dist/src/commands/v0.js run --input "$fixture" --output-dir "$target" --pack assets/packs/finguard/pack.yaml --mode mock); then
+      fail "V0 runner command for $(basename "$fixture")"
       return 1
     fi
-  done
+    for file in benchmark_run.json sample_executions.jsonl benchmark.sqlite ingestion_report.json; do
+      if [ ! -f "$target/$file" ]; then
+        fail "V0 runner did not create $file"
+        return 1
+      fi
+    done
+    for property in status dataset_hash config_hash; do
+      if ! grep -q "\"$property\"" "$target/benchmark_run.json"; then
+        fail "benchmark_run.json is missing property: $property"
+        return 1
+      fi
+    done
+    if ! grep -q '"status": "completed"' "$target/benchmark_run.json"; then
+      fail "benchmark_run.json did not complete for $(basename "$fixture")"
+      return 1
+    fi
+    expected_count=$(($(grep -cve '^[[:space:]]*$' "$fixture" || true) - 1))
+    output_count=$(grep -cve '^[[:space:]]*$' "$target/sample_executions.jsonl" || true)
+    if [ "$expected_count" -ne "$output_count" ]; then
+      fail "sample count mismatch for $(basename "$fixture"): input=$expected_count output=$output_count"
+      return 1
+    fi
+    if ! node --input-type=module -e "import { DatabaseSync } from 'node:sqlite'; const db = new DatabaseSync(process.argv[1]); const views = db.prepare(\"SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'view' AND name IN ('report_public_samples', 'report_run_metrics')\").get().count; const rows = db.prepare('SELECT COUNT(*) AS count FROM report_public_samples').get().count; db.close(); if (views !== 2 || rows !== Number(process.argv[2])) process.exit(1);" "$target/benchmark.sqlite" "$expected_count"; then
+      fail "SQLite public views for $(basename "$fixture")"
+      return 1
+    fi
+  }
 
-  input_count=$(grep -cve '^[[:space:]]*$' "$V0_INPUT" || true)
-  output_count=$(grep -cve '^[[:space:]]*$' "$sample_output" || true)
-  if [ "$input_count" -ne "$output_count" ]; then
-    fail "sample count mismatch: input=$input_count output=$output_count"
+  run_fixture "$ROOT/checks/e2e/v0/fixtures/complaints.csv" "complaints" || return 1
+  run_fixture "$ROOT/checks/e2e/v0/fixtures/security.csv" "security" || return 1
+
+  if grep -Eqi '123\.456\.789-00|12345-6|external\.invalid|ignore as instru' "$output_dir/security/benchmark_run.json" "$output_dir/security/sample_executions.jsonl"; then
+    fail 'public output contains security fixture content'
     return 1
   fi
 
@@ -113,11 +130,7 @@ check_e2e_v0() {
 
 usage() {
   printf '%s\n' \
-    'usage: scripts/check {structure|contracts|e2e:v0|v0|all}' \
-    '' \
-    'v0 requires V0_COMMAND. The command receives:' \
-    '  V0_INPUT      path to the deterministic JSONL fixture' \
-    '  V0_OUTPUT_DIR directory where benchmark_run.json and sample_executions.jsonl must be written'
+    'usage: scripts/check {structure|contracts|e2e:v0|v0|all}'
 }
 
 command=${1:-all}

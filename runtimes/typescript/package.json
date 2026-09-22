@@ -1,0 +1,17 @@
+{
+  "name": "inference-triage",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.3.14",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "bun run build && cd ../.. && node --test runtimes/typescript/dist/test/*.test.js",
+    "v0": "cd ../.. && node runtimes/typescript/dist/src/commands/v0.js",
+    "check": "bun run build && cd ../.. && node runtimes/typescript/dist/src/commands/v0.js --help"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.0",
+    "typescript": "^5.9.3"
+  }
+}

@@ -7,10 +7,9 @@ completo:
 fixture → ingestão → decisão → output estruturado → report persistido
 ```
 
-O checker fornece duas variáveis ao runner:
+O checker executa o CLI V0 sobre `complaints.csv` e `security.csv`. O runner
+recebe `--input`, `--output-dir`, `--pack` e `--mode mock`.
 
-- `V0_INPUT`: fixture JSONL de entrada;
-- `V0_OUTPUT_DIR`: diretório temporário para os outputs esperados.
-
-O runner deve produzir `benchmark_run.json` e `sample_executions.jsonl`. Um
-smoke test separado poderá executar o Laya real; ele não substitui este E2E.
+Cada execução deve produzir `benchmark.sqlite`, `benchmark_run.json`,
+`sample_executions.jsonl` e `ingestion_report.json`. Um smoke test separado
+poderá executar Laya local; ele não substitui este E2E determinístico.

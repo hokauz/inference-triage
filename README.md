@@ -71,6 +71,60 @@ domain pack → ingestão/normalização → decisão barata
 O sistema começa como um monólito local. Interfaces são camadas de consumo;
 elas não duplicam regras de negócio nem lógica do pipeline.
 
+Cada runtime e cada interface Node será um projeto isolado: seu `package.json`,
+lockfile e `node_modules` vivem dentro da própria pasta (`runtimes/typescript`,
+`interfaces/api`, `interfaces/web`, etc.). Manifests e lockfiles são
+versionados para reprodutibilidade; `node_modules` e artefatos de build são
+ignorados em qualquer profundidade e nunca sobem para o repositório.
+
+## Executar a V0 TypeScript
+
+A V0 usa Node 25 em execução e Bun somente para instalar dependências e chamar
+scripts. Ela aceita CSV FinGuard, usa o decisor `mock-finguard-v1` sem rede e
+persiste dados restritos e reports públicos no SQLite.
+
+```bash
+make install
+make build
+node runtimes/typescript/dist/src/commands/v0.js run \
+  --input checks/e2e/v0/fixtures/complaints.csv \
+  --output-dir artifacts/local-v0 \
+  --pack assets/packs/finguard/pack.yaml \
+  --mode mock
+
+make test
+make check
+make run-mock
+make benchmark-v0
+```
+
+`make run-mock` executa uma amostra local sem Docker. É possível trocar a
+entrada e o diretório de saída:
+
+```bash
+make run-mock \
+  INPUT=checks/e2e/v0/fixtures/security.csv \
+  OUTPUT_DIR=artifacts/security-mock
+```
+
+`make benchmark-v0` executa o perfil Docker `v0-mock`, com rede desativada,
+1 CPU e limite de 512 MiB, produzindo os resultados em `artifacts/v0-mock/`.
+`make check-compose-v0` é o mesmo fluxo com validações adicionais de contrato.
+
+Para executar o benchmark controlado sobre o CSV completo do FinGuard:
+
+```bash
+make benchmark-finguard
+```
+
+Esse perfil lê `datasets/source/finguard/dataset_finguard_desafio_3.csv` como
+volume somente leitura e grava os resultados em
+`artifacts/v0-finguard/full/`.
+
+Cada run produz `benchmark.sqlite`, `benchmark_run.json`,
+`sample_executions.jsonl` e `ingestion_report.json`. O texto bruto só vive na
+tabela SQLite restrita; os arquivos JSON/JSONL derivam das views públicas.
+
 ## Papéis dos modelos
 
 O benchmark compara composições de papéis, não um único `provider` para tudo.
@@ -287,8 +341,9 @@ O mesmo fluxo pode ser executado pelo `Makefile`:
 ```bash
 make check-structure
 make check-contracts
-make check-e2e-v0 V0_COMMAND="comando-do-runner"
-make check V0_COMMAND="comando-do-runner"
+make check-e2e-v0
+make check
+make check-compose-v0
 ```
 
 Ele deverá verificar estrutura, contratos, build, execução E2E, persistência

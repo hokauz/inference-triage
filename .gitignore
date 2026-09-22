@@ -3,6 +3,21 @@
 
 /artifacts/*
 !/artifacts/.gitkeep
+# Preserve public benchmark metadata/exports for the constrained V0 profile.
+!/artifacts/v0-mock/
+!/artifacts/v0-mock/*/
+!/artifacts/v0-mock/*/benchmark_run.json
+!/artifacts/v0-mock/*/sample_executions.jsonl
+!/artifacts/v0-mock/*/ingestion_report.json
+/artifacts/v0-mock/*/benchmark.sqlite
+
+# Preserve the same public exports for the full FinGuard benchmark.
+!/artifacts/v0-finguard/
+!/artifacts/v0-finguard/*/
+!/artifacts/v0-finguard/*/benchmark_run.json
+!/artifacts/v0-finguard/*/sample_executions.jsonl
+!/artifacts/v0-finguard/*/ingestion_report.json
+/artifacts/v0-finguard/*/benchmark.sqlite
 
 /datasets/source/*
 !/datasets/source/.gitkeep
@@ -10,7 +25,16 @@
 datasets/source/finguard/*
 !/datasets/source/finguard/README.md
 
-node_modules/
-.venv/
-__pycache__/
-*.py[cod]
+# JavaScript/TypeScript dependencies (any depth)
+**/node_modules/
+
+# Python environments and caches (any depth)
+**/.venv/
+**/venv/
+**/__pycache__/
+**/*.py[cod]
+
+# Build and test artifacts (any depth)
+**/dist/
+**/build/
+**/coverage/
