@@ -57,3 +57,4 @@ datasets/source/finguard/*
 # Laya ONNX weights are prepared locally and identified by the tracked manifest.
 /models/laya/multilingual/*
 !/models/laya/multilingual/.gitkeep
+/models/laya/multilingual-onnx/*

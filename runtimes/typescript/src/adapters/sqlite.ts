@@ -29,6 +29,7 @@ export interface PublicSample {
   risk: string;
   threats: DecisionResult["threats"];
   confidence: DecisionResult["confidence"];
+  confidenceStatus: NonNullable<DecisionResult["confidenceStatus"]>;
   priority: number;
   generationDisposition: string;
   publicSummary: string;
@@ -55,6 +56,7 @@ export class SqliteRunStore {
     const columns = new Set((this.db.prepare("PRAGMA table_info(sample_execution)").all() as Array<{ name: string }>).map((column) => column.name));
     if (!columns.has("model_output_json")) this.db.exec("ALTER TABLE sample_execution ADD COLUMN model_output_json TEXT");
     if (!columns.has("policy_reasons_json")) this.db.exec("ALTER TABLE sample_execution ADD COLUMN policy_reasons_json TEXT");
+    if (!columns.has("confidence_status")) this.db.exec("ALTER TABLE sample_execution ADD COLUMN confidence_status TEXT NOT NULL DEFAULT 'probabilistic'");
   }
 
   beginRun(metadata: RunMetadata): void {
@@ -116,9 +118,9 @@ export class SqliteRunStore {
     );
     this.db.prepare(
       `INSERT INTO sample_execution (
-        run_id, sample_id, category, product, urgency, risk, threats_json, confidence_json,
+        run_id, sample_id, category, product, urgency, risk, threats_json, confidence_json, confidence_status,
         priority, generation_disposition, public_summary, decision_ms, model_output_json, policy_reasons_json
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       runId,
       complaint.id,
@@ -128,6 +130,7 @@ export class SqliteRunStore {
       decision.risk,
       JSON.stringify(decision.threats),
       JSON.stringify(decision.confidence),
+      decision.confidenceStatus ?? "probabilistic",
       decision.routing.priority,
       decision.routing.generationDisposition,
       decision.publicSummary,
@@ -160,7 +163,7 @@ export class SqliteRunStore {
 
   publicSamples(runId: string): PublicSample[] {
     const rows = this.db.prepare(
-      `SELECT run_id, sample_id, category, product, urgency, risk, threats_json, confidence_json,
+      `SELECT run_id, sample_id, category, product, urgency, risk, threats_json, confidence_json, confidence_status,
         priority, generation_disposition, public_summary, decision_ms, data_class
        FROM report_public_samples WHERE run_id = ? ORDER BY sample_id`
     ).all(runId) as Array<Record<string, unknown>>;
@@ -173,6 +176,7 @@ export class SqliteRunStore {
       risk: String(row.risk),
       threats: JSON.parse(String(row.threats_json)),
       confidence: JSON.parse(String(row.confidence_json)),
+      confidenceStatus: String(row.confidence_status) as NonNullable<DecisionResult["confidenceStatus"]>,
       priority: Number(row.priority),
       generationDisposition: String(row.generation_disposition),
       publicSummary: String(row.public_summary),

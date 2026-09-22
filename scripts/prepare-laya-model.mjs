@@ -9,7 +9,7 @@ import { BUNDLE_FILES, ensureBundle } from "../runtimes/typescript/node_modules/
 
 const root = resolve(import.meta.dirname, "..");
 const targetDir = resolve(root, process.env.LAYA_MODEL_DIR ?? "models/laya/multilingual");
-const manifestPath = resolve(root, "models/laya/manifest.json");
+const manifestPath = resolve(root, process.env.LAYA_MANIFEST_PATH ?? "models/laya/manifest.json");
 const revision = process.env.LAYA_REVISION ?? "main";
 const repo = process.env.LAYA_REPO ?? "receptron/laya-onnx";
 const subfolder = process.env.LAYA_SUBFOLDER ?? "";
@@ -35,20 +35,21 @@ async function fileInfo(relativePath) {
 }
 
 async function verify() {
-  const files = {};
-  for (const file of BUNDLE_FILES) files[file] = await fileInfo(file);
   let manifest;
   try {
     manifest = JSON.parse(await readFile(manifestPath, "utf8"));
   } catch {
     throw new Error(`missing or invalid Laya manifest: ${manifestPath}`);
   }
+  const files = {};
+  for (const file of Object.keys(manifest.files ?? {})) files[file] = await fileInfo(file);
+  if (!Object.keys(files).length) throw new Error(`Laya manifest has no bundle files: ${manifestPath}`);
   for (const [file, info] of Object.entries(files)) {
     const expected = manifest.files?.[file];
     if (expected?.sha256 && expected.sha256 !== info.sha256) throw new Error(`hash mismatch for ${file}`);
     if (expected?.size && expected.size !== info.size) throw new Error(`size mismatch for ${file}`);
   }
-  console.log(JSON.stringify({ status: "ready", targetDir, revision: manifest.revision ?? null, files }, null, 2));
+  console.log(JSON.stringify({ status: "ready", targetDir, revision: manifest.revision ?? manifest.source_revision ?? null, files }, null, 2));
 }
 
 async function prepare() {

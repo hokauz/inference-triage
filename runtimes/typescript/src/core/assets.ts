@@ -34,6 +34,7 @@ export function loadFinGuardPack(root: string, packPath: string): FinGuardPack {
     promptPaths: ["decision", "risk_review", "summary"].map((key) =>
       resolveAsset(root, nestedScalar(content, key)),
     ),
+    decisionPromptPath: resolveAsset(root, nestedScalar(content, "decision")),
   };
 }
 

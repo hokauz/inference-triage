@@ -175,6 +175,82 @@ baseline oficial.
 6. Promover correções humanas para dataset candidato somente após revisão.
 7. Repetir `make benchmark-laya` para validar a baseline oficial.
 
+### Rodada de gates 2026-09-22
+
+Foi implementado o avaliador versionado em `scripts/evaluate-gates.mjs`, com
+manifesto congelado em `checks/gates/finguard-v0.json`, splits determinísticos
+de desenvolvimento/validação/teste, verificação de IDs, hashes de texto,
+dataset, taxonomia, policy, prompt efetivo e bundle do modelo. A saída fica no
+diretório da variante e não sobrescreve o baseline.
+
+Também foram adicionados:
+
+- prompts versionados com verificação do orçamento `head_max_len`;
+- persistência das distribuições completas, score de urgência e escolha bruta;
+- confiança da classe efetivamente escolhida, com zero para resposta inválida;
+- Brier, ECE, risco-cobertura e temperatura apenas offline;
+- política opcional `source_if_known` para `sourceProduct` conhecido;
+- exportação do checkpoint multilíngue para ONNX, com revisão e hashes fixados;
+- variante hierárquica e variantes contrastivas para comparação controlada.
+
+O checkpoint multilíngue melhorou categoria, mas o resultado final não foi
+promovido. A melhor candidata foi `multi-v1-source`: Laya multilíngue, prompt
+v1 e `source_if_known`.
+
+| Fase | Categoria | Produto | Urgência | Risco | Prioridade/disposição | P95 |
+|---|---:|---:|---:|---:|---:|---:|
+| Validação candidata | 48% | 86% | 73% | 75% | 75% | 841 ms |
+| Teste candidata | 49% | 79% | 70% | 80% | 77% | 758 ms |
+| Completo candidato | 49% | 82,2% | 71,4% | 78,4% | 75,4% | 814 ms |
+
+No conjunto completo, categoria, produto, urgência, risco, macro-F1, P95 e as
+cinco ameaças passaram. Prioridade/disposição ficou em 377/500, abaixo do gate
+380/500. No teste reservado, categoria ficou em 50/102 contra 53/102 do
+baseline; prioridade/disposição empatou em 77/102. Portanto o holdout falhou
+por regressão de categoria e a configuração não foi promovida ao perfil
+oficial.
+
+As principais confusões completas da candidata foram:
+
+```text
+Fraude/Segurança → Cobrança Indevida: 24
+Produto/Serviço  → Fraude/Segurança: 39
+Cobrança Indevida → Fraude/Segurança: 16
+Atendimento      → Produto/Serviço: 14
+```
+
+O teste de temperatura encontrou `T=4,25` no desenvolvimento, reduzindo Brier
+de aproximadamente 0,773 para 0,659 e ECE10 de 0,294 para 0,093 no relatório
+exploratório. Isso não foi promovido para roteamento, pois os rótulos ainda são
+rascunho e calibração não recupera a regressão categórica.
+
+Artefatos da rodada:
+
+```text
+artifacts/v0-laya-local/multi-v1-source/gate_report.test.json
+artifacts/v0-laya-local/multi-v1-source/gate_report.json
+```
+
+### Calibração experimental e robustez
+
+A camada experimental foi adicionada sem alterar o roteamento padrão. O
+calibrador `scripts/calibrate-gates.mjs` ajusta temperature scaling separado
+para categoria, produto e urgência usando desenvolvimento e grava o artefato
+com hashes do dataset, modelo, prompt e run. As decisões recalibradas ficam em
+`confidence_decisions.jsonl`, incluindo probabilidades brutas, scores log,
+probabilidades calibradas e versão do calibrador.
+
+O relatório de gates agora pode simular `--confidence-policy experimental` com
+limiares de 0,50 a 0,95 e registrar cobertura, abstention e concordância
+condicional. Esse modo é exploratório e não altera a decisão pública.
+
+Também foram adicionadas a grade de urgência de 1,00 a 1,80, diagnósticos de
+transição de prioridade e a suíte `run-option-order-suite.mjs` /
+`evaluate-option-order.mjs`. A avaliação smoke encontrou sensibilidade à ordem:
+no conjunto de três casos, reverse alterou duas decisões de categoria e rotate
+alterou uma. A ordem canônica permanece obrigatória e a promoção fica bloqueada
+até essa sensibilidade ser tratada.
+
 ## Gates do último run
 
 | Gate | Resultado | Status |

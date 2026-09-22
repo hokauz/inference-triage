@@ -1,0 +1,18 @@
+{
+  "model": "laya",
+  "variant": "multilingual",
+  "source": "convaiinnovations/laya-multilingual",
+  "source_revision": "052592a15d198d9ad47da779604259b10b47b7aa",
+  "architecture_source": "convaiinnovations/laya",
+  "architecture_revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982",
+  "exporter_source_revision": "6478649e723122ca24bbf5fb69ed1010023c9750",
+  "exporter_parity_max_logit_error": 0.0001513958,
+  "exporter_parity_max_act_error": 0,
+  "bundle_hash": "95d04af6f315c2f0521a86578486d7cab6f4f3bf837c5c65cf2ecab43089ae5e",
+  "files": {
+    "laya.onnx": { "sha256": "c827390bbcc09478c81f1cc6de6ed18d3c7420405e7547e911a4d6feb2d414c2", "size": 1290289264 },
+    "laya_config.json": { "sha256": "7de12d5029e6834fa6ce19939380488cf9012e164fe2da91568b23d4075a2ddb", "size": 115 },
+    "tokenizer/tokenizer.json": { "sha256": "609d8f4c067cd3950f88594c5a802616cea245823836ef5848ee4fc40aab5b6f", "size": 34363188 },
+    "tokenizer/tokenizer_config.json": { "sha256": "424b69444bf7b5809dc2cd2e36d0bd71b8055124dd24274d6db3c655d38205e7", "size": 502 }
+  }
+}

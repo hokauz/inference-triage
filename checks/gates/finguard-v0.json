@@ -1,0 +1,24 @@
+{
+  "reference_type": "ai_draft_non_gold",
+  "labels": "datasets/gold/finguard/labels-ai-draft-v2.csv",
+  "labels_sha256": "3f7b82c4c52edb0bc268fb50a7c3fef699df757804ffdca022428f4c5a77e3ed",
+  "candidate_model_hashes": ["43f584bb6ae926d87cf4dde3a7cbeb570ee284888c49b1f60c801e9cb3f174da", "95d04af6f315c2f0521a86578486d7cab6f4f3bf837c5c65cf2ecab43089ae5e"],
+  "baseline": {
+    "run_id": "15d4e6e0-f665-417c-a0c8-2139e611cf11",
+    "dataset_hash": "9eeee12207acc207e8595063819039d588a8ab2277d1611756a5f0a34b4cfe37",
+    "taxonomy_hash": "cbd993a25fcb59a1f636caf2e19ee4ead31a5ef06d730aecb354cc2f06560a2d",
+    "policy_hash": "78c0f742f75757bf528e7d71d09a7e6ca0faf95b943ea692266516f21401e7fe",
+    "prompt_hash": "6f297b0ff0b55c7ac1f785f4e8b2cab10dea3968daad5d21dc728be96c755a10",
+    "config_hash": "6758ecf83e759aa6e5333821c4fd045767ebe0088a83506aa12e214667cf90a7",
+    "model_hash": "43f584bb6ae926d87cf4dde3a7cbeb570ee284888c49b1f60c801e9cb3f174da",
+    "execution_profile": "v0-laya-local",
+    "matches": { "category": 229, "product": 391, "urgency": 359, "risk": 392, "priority": 375, "generationDisposition": 375 },
+    "category_macro_f1": 0.39636430205614354,
+    "threat_matches": { "piiPresent": 443, "promptInjection": 487, "exfiltrationRequest": 474, "unauthorizedDataAccess": 475, "externalExfiltration": 499 },
+    "p95_decision_ms": 1522.028
+  },
+  "minimum_matches": { "category": 235, "product": 380, "urgency": 350, "risk": 390, "priority": 380, "generationDisposition": 380 },
+  "minimum_category_macro_f1": 0.396,
+  "maximum_p95_decision_ms": 1830,
+  "split": { "development": 0.6, "validation": 0.2, "test": 0.2 }
+}

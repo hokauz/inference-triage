@@ -121,9 +121,11 @@ Esse perfil lê `datasets/source/finguard/dataset_finguard_desafio_3.csv` como
 volume somente leitura e grava os resultados em
 `artifacts/v0-finguard/full/`.
 
-O adapter Laya real exige um bundle ONNX local em
-`models/laya/multilingual/`. Prepare e valide o bundle com os alvos do
-Makefile:
+O adapter Laya real exige um bundle ONNX local. O diretório legado
+`models/laya/multilingual/` contém, apesar do nome, o checkpoint inglês
+`root`. O checkpoint multilíngue fixado está em
+`models/laya/multilingual-onnx/` após a exportação. Prepare e valide com os
+alvos do Makefile:
 
 ```bash
 make prepare-laya-model LAYA_REVISION=<revision-ou-main>
@@ -133,6 +135,20 @@ make benchmark-laya LAYA_MODEL_REVISION=<revision> LAYA_MODEL_HASH=<sha256>
 # perfil local mais rápido: 4 CPUs, 8 GiB, 4 threads ONNX
 make laya-local-smoke
 make benchmark-laya-local LAYA_MODEL_REVISION=<revision> LAYA_MODEL_HASH=<sha256>
+# variante multilíngue: exportar uma vez e executar sem sobrescrever o baseline
+make export-laya-multilingual
+make check-laya-multilingual-model
+make benchmark-laya-variant VARIANT=multi-v1-source MODEL_VARIANT=multilingual-onnx MODEL_MANIFEST=models/laya/multilingual-manifest.json MODEL_REVISION=052592a15d198d9ad47da779604259b10b47b7aa DECISION_PROMPT=assets/prompts/finguard/decision-v1.json PRODUCT_POLICY=source_if_known
+make evaluate-gates VARIANT=multi-v1-source GATE_PHASE=validation
+# calibração experimental, sem alterar as decisões públicas
+make calibrate-gates VARIANT=multi-v1-source-rerun
+make evaluate-gates VARIANT=multi-v1-source-rerun GATE_PHASE=validation \
+  CALIBRATOR=artifacts/v0-laya-local/multi-v1-source-rerun/calibration.json \
+  CONFIDENCE_POLICY=experimental
+# suíte de sensibilidade à ordem das opções
+make run-option-order-suite MODEL_DIR=models/laya/multilingual-onnx
+make evaluate-option-order \
+  RUNS='canonical=artifacts/v0-laya-local/option-order/canonical,reverse=artifacts/v0-laya-local/option-order/reverse,rotate=artifacts/v0-laya-local/option-order/rotate,seed-17=artifacts/v0-laya-local/option-order/seed-17,seed-29=artifacts/v0-laya-local/option-order/seed-29'
 ```
 
 `v0-laya` permanece como baseline oficial (1 CPU/3 GiB). `v0-laya-local` é
@@ -154,6 +170,15 @@ carregar o modelo; ele apenas fornece o bundle ONNX por volume somente leitura.
 O mock continua usando o envelope menor de 512 MiB. O perfil Laya começa com
 3 GiB e deverá ser recalibrado após medir startup, carga do modelo e pico de
 memória.
+
+O prompt de decisão é carregado do asset do pack e seu conteúdo efetivo entra
+no hash do run. `source_if_known` é uma política opcional para usar
+`sourceProduct` quando é um valor conhecido da taxonomia; a escolha original e
+as distribuições do Laya ficam restritas no SQLite. O relatório de gates
+compara os 500 IDs e hashes com o manifesto congelado
+`checks/gates/finguard-v0.json`. As métricas são concordância com rótulos
+rascunho, não accuracy. O teste reservado só é aberto com
+`GATE_PHASE=test` após escolher o candidato pela validação.
 
 Cada run produz `benchmark.sqlite`, `benchmark_run.json`,
 `sample_executions.jsonl`, `ingestion_report.json` e

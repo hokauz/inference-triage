@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 import { runV0 } from "../runner/v0.js";
 
 function usage(): void {
-  console.log("usage: v0.js run --input <csv> --output-dir <dir> --pack <pack.yaml> --mode mock|laya [--model-dir <dir>]");
+  console.log("usage: v0.js run --input <csv> --output-dir <dir> --pack <pack.yaml> --mode mock|laya [--model-dir <dir>] [--model-revision <sha>] [--decision-prompt <json>] [--urgency-high-boundary <number>] [--product-policy model|source_if_known] [--option-order canonical|reverse|rotate|seed-17|seed-29] [--confidence-policy none|experimental]");
 }
 
 function readOptions(argumentsList: string[]): Record<string, string> {
@@ -43,6 +43,12 @@ try {
     packPath: resolve(options.pack),
     mode: options.mode,
     modelDir: options["model-dir"],
+    modelRevision: options["model-revision"],
+    decisionPromptPath: options["decision-prompt"],
+    urgencyHighBoundary: options["urgency-high-boundary"] === undefined ? undefined : Number(options["urgency-high-boundary"]),
+    productPolicy: options["product-policy"] as "model" | "source_if_known" | undefined,
+    optionOrder: options["option-order"] as "canonical" | "reverse" | "rotate" | "seed-17" | "seed-29" | undefined,
+    confidencePolicy: options["confidence-policy"] as "none" | "experimental" | undefined,
   });
   console.log(JSON.stringify({ status: "completed", runId: result.runId, outputDir: result.outputDir }));
 } catch (error) {

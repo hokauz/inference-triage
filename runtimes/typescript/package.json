@@ -15,6 +15,8 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@receptron/laya": "0.1.2"
+    "@receptron/laya": "0.1.2",
+    "@huggingface/tokenizers": "0.2.0",
+    "onnxruntime-node": "1.30.0"
   }
 }

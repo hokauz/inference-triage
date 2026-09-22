@@ -45,6 +45,8 @@ export interface DecisionConfidence {
   risk: number;
 }
 
+export type ConfidenceStatus = "probabilistic" | "deterministic" | "invalid" | "experimental";
+
 export interface RoutingDecision {
   priority: number;
   generationDisposition: GenerationDisposition;
@@ -57,6 +59,7 @@ export interface DecisionResult {
   risk: string;
   threats: ThreatDetection;
   confidence: DecisionConfidence;
+  confidenceStatus?: ConfidenceStatus;
   routing: RoutingDecision;
   publicSummary: string;
   decisionMs: number;
@@ -65,6 +68,28 @@ export interface DecisionResult {
     product: string;
     urgency: string;
     confidence: DecisionConfidence;
+    confidenceStatus?: ConfidenceStatus;
+    confidenceStatusByField?: { category: ConfidenceStatus; product: ConfidenceStatus; urgency: ConfidenceStatus; risk: "deterministic" };
+    categoryProbabilities?: Record<string, number>;
+    categoryRawScores?: Record<string, number>;
+    categoryRawScoreKind?: "log_probability" | "logit";
+    categoryCalibratedProbabilities?: Record<string, number>;
+    productProbabilities?: Record<string, number>;
+    productRawScores?: Record<string, number>;
+    productRawScoreKind?: "log_probability" | "logit";
+    productCalibratedProbabilities?: Record<string, number>;
+    productModelChoice?: string;
+    productRawChoice?: string;
+    urgencyProbabilities?: Record<string, number>;
+    urgencyRawScores?: Record<string, number>;
+    urgencyRawScoreKind?: "log_probability" | "logit";
+    urgencyCalibratedProbabilities?: Record<string, number>;
+    urgencyScore?: number;
+    categoryStageProbabilities?: Record<string, number>;
+    calibratorVersion?: string;
+    confidencePolicy?: "none" | "experimental";
+    confidenceReason?: string;
+    sourceMetadataOverride?: boolean;
   };
   policyReasons?: string[];
 }
@@ -93,6 +118,7 @@ export interface FinGuardPack {
   taxonomyPath: string;
   policyPath: string;
   promptPaths: string[];
+  decisionPromptPath: string;
 }
 
 export interface ExecutionEnvironment {

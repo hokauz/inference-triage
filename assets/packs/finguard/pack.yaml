@@ -11,7 +11,7 @@ policies:
     version: 2.0
     path: assets/policies/finguard/POL-SAC-001-v2.0.md
 prompts:
-  decision: assets/prompts/finguard/decision-v1.md
+  decision: assets/prompts/finguard/decision-v1.json
   risk_review: assets/prompts/finguard/risk-review-v1.md
   summary: assets/prompts/finguard/summary-v1.md
 datasets:

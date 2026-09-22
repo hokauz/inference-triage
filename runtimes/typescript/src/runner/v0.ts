@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { performance } from "node:perf_hooks";
-import { mkdirSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, renameSync, writeFileSync } from "node:fs";
 import { basename, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 
@@ -9,6 +9,7 @@ import { ingestCsv } from "../core/csv.js";
 import { canonicalJson, sha256 } from "../core/hashing.js";
 import { MockDecisionModel } from "../core/mock-decision-model.js";
 import { LayaDecisionModel } from "../adapters/laya.js";
+import { loadDecisionPrompt, reorderDecisionPrompt, type OptionOrder } from "../core/decision-prompt.js";
 import type { ExecutionEnvironment } from "../core/types.js";
 import { SqliteRunStore } from "../adapters/sqlite.js";
 
@@ -20,6 +21,11 @@ export interface V0Options {
   modelDir?: string;
   modelRevision?: string;
   modelHash?: string;
+  decisionPromptPath?: string;
+  urgencyHighBoundary?: number;
+  productPolicy?: "model" | "source_if_known";
+  optionOrder?: OptionOrder;
+  confidencePolicy?: "none" | "experimental";
   layaThreads?: number;
   workspaceRoot?: string;
 }
@@ -58,11 +64,23 @@ export async function runV0(options: V0Options): Promise<{ runId: string; output
   const inputPath = resolve(options.inputPath);
   const outputDir = resolve(options.outputDir);
   const packPath = resolve(options.packPath);
+  if (options.mode === "laya" && (existsSync(resolve(outputDir, "benchmark_run.json")) || existsSync(resolve(outputDir, "benchmark.sqlite")))) {
+    throw new Error(`output directory already contains a benchmark: ${outputDir}`);
+  }
   mkdirSync(outputDir, { recursive: true });
 
   const pack = loadFinGuardPack(workspaceRoot, packPath);
   if (pack.id !== "finguard") throw new Error(`V0 only supports the finguard pack, received ${pack.id}`);
   const taxonomy = loadTaxonomy(pack.taxonomyPath);
+  const decisionPromptPath = resolve(options.decisionPromptPath ?? pack.decisionPromptPath);
+  const optionOrder = options.optionOrder ?? "canonical";
+  const decisionPrompt = options.mode === "laya" ? reorderDecisionPrompt(loadDecisionPrompt(decisionPromptPath, taxonomy), optionOrder) : null;
+  const urgencyHighBoundary = options.urgencyHighBoundary ?? 1.5;
+  if (!Number.isFinite(urgencyHighBoundary) || urgencyHighBoundary < 0.5 || urgencyHighBoundary > 2.5) throw new Error("urgency high boundary must be between 0.5 and 2.5");
+  const productPolicy = options.productPolicy ?? "model";
+  if (!["model", "source_if_known"].includes(productPolicy)) throw new Error(`unsupported product policy: ${productPolicy}`);
+  const confidencePolicy = options.confidencePolicy ?? "none";
+  if (!["none", "experimental"].includes(confidencePolicy)) throw new Error(`unsupported confidence policy: ${confidencePolicy}`);
   const ingestion = ingestCsv(inputPath, taxonomy);
   if (options.mode === "laya" && !(options.modelDir ?? process.env.LAYA_MODEL_DIR)) throw new Error("Laya requires --model-dir or LAYA_MODEL_DIR pointing to a local ONNX bundle");
   const modelDir = options.modelDir ?? process.env.LAYA_MODEL_DIR;
@@ -73,18 +91,25 @@ export async function runV0(options: V0Options): Promise<{ runId: string; output
     : (options.mode === "laya" && modelDir ? await modelBundleHash(modelDir) : null);
   const modelStartedAt = performance.now();
   const model = options.mode === "laya"
-    ? await LayaDecisionModel.load({ modelDir: modelDir ?? "", revision: modelRevision, threads: options.layaThreads ?? Number.parseInt(process.env.LAYA_THREADS ?? "1", 10) })
+    ? await LayaDecisionModel.load({ modelDir: modelDir ?? "", revision: modelRevision, threads: options.layaThreads ?? Number.parseInt(process.env.LAYA_THREADS ?? "1", 10), prompt: decisionPrompt!, taxonomy, urgencyHighBoundary, productPolicy })
     : new MockDecisionModel();
-  const environment = executionEnvironment(options.mode === "laya" ? { modelPackage: "@receptron/laya@0.1.2", modelRevision: modelRevision && modelRevision !== "unknown" ? modelRevision : null, modelHash, modelDir: "models/laya/multilingual", executionProvider: "cpu", onnxThreads: options.layaThreads ?? Number.parseInt(process.env.LAYA_THREADS ?? "1", 10), modelLoadMs: Number((performance.now() - modelStartedAt).toFixed(3)) } : undefined);
+  const environment = executionEnvironment(options.mode === "laya" ? { modelPackage: "@receptron/laya@0.1.2", modelRevision: modelRevision && modelRevision !== "unknown" ? modelRevision : null, modelHash, modelDir: modelDir?.replace(`${workspaceRoot}/`, "") ?? null, executionProvider: "cpu", onnxThreads: options.layaThreads ?? Number.parseInt(process.env.LAYA_THREADS ?? "1", 10), modelLoadMs: Number((performance.now() - modelStartedAt).toFixed(3)) } : undefined);
   const taxonomyHash = fileHash(pack.taxonomyPath);
   const policyHash = fileHash(pack.policyPath);
-  const promptsHash = promptHash(pack.promptPaths);
+  const promptsHash = promptHash([decisionPromptPath, ...pack.promptPaths.slice(1)]);
   const pipelineConfig = {
     mode: options.mode,
     decisionModel: model.id,
     packId: pack.id,
     packVersion: pack.version,
     taxonomyVersion: taxonomy.version,
+    decisionPromptVersion: decisionPrompt?.version ?? null,
+    decisionPromptMode: decisionPrompt?.mode ?? null,
+    decisionPromptAsset: options.mode === "laya" ? decisionPromptPath.replace(`${workspaceRoot}/`, "") : null,
+    urgencyHighBoundary,
+    productPolicy,
+    optionOrder,
+    confidencePolicy,
     execution: environment,
   };
   const configHash = sha256(canonicalJson({
