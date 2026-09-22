@@ -1,0 +1,472 @@
+{
+  "report_type": "benchmark_comparison",
+  "reference_type": "ai_draft_non_gold",
+  "warning": "labels-ai-draft-v2 was derived from an AI-assisted draft, has canonical source hashes, and remains pending human review; agreement is not accuracy.",
+  "labels_file": "datasets/gold/finguard/labels-ai-draft-v2.csv",
+  "benchmark_file": "artifacts/v0-laya/full/sample_executions.jsonl",
+  "label_status": {
+    "pending_human_review": 500
+  },
+  "coverage": {
+    "labels": 500,
+    "predictions": 500,
+    "matched": 500,
+    "missingPredictions": [],
+    "extraPredictions": [],
+    "hashChecked": 500,
+    "hashMismatches": []
+  },
+  "label_quantities": {
+    "category": {
+      "Cobrança Indevida": 139,
+      "Fraude/Segurança": 111,
+      "Produto/Serviço": 95,
+      "Atendimento": 57,
+      "Cancelamento": 55,
+      "Outros": 43
+    },
+    "product": {
+      "Conta Corrente": 142,
+      "Não Identificado": 96,
+      "Cartão de Crédito": 88,
+      "Empréstimo": 74,
+      "Investimentos": 54,
+      "Seguros": 46
+    },
+    "urgency": {
+      "Crítica": 342,
+      "Alta": 82,
+      "Média": 66,
+      "Baixa": 10
+    },
+    "risk": {
+      "Crítico": 332,
+      "Alto": 81,
+      "Médio": 79,
+      "Baixo": 8
+    },
+    "priority": {
+      "10": 8,
+      "40": 46,
+      "70": 104,
+      "100": 342
+    },
+    "generation_disposition": {
+      "escalation_required": 342,
+      "priority_requested": 104,
+      "deferred": 46,
+      "none": 8
+    }
+  },
+  "benchmark_quantities": {
+    "category": {
+      "Cobrança Indevida": 260,
+      "Produto/Serviço": 101,
+      "Cancelamento": 85,
+      "Fraude/Segurança": 34,
+      "Atendimento": 19,
+      "Outros": 1
+    },
+    "product": {
+      "Não Identificado": 133,
+      "Conta Corrente": 105,
+      "Cartão de Crédito": 94,
+      "Empréstimo": 87,
+      "Seguros": 47,
+      "Investimentos": 34
+    },
+    "urgency": {
+      "Crítica": 299,
+      "Alta": 132,
+      "Média": 69
+    },
+    "risk": {
+      "Crítico": 287,
+      "Médio": 146,
+      "Alto": 67
+    },
+    "priority": {
+      "40": 62,
+      "70": 123,
+      "100": 315
+    },
+    "generation_disposition": {
+      "escalation_required": 315,
+      "priority_requested": 123,
+      "deferred": 62
+    }
+  },
+  "agreements": {
+    "category": {
+      "compared": 500,
+      "matches": 213,
+      "rate": 0.426
+    },
+    "product": {
+      "compared": 500,
+      "matches": 383,
+      "rate": 0.766
+    },
+    "urgency": {
+      "compared": 500,
+      "matches": 354,
+      "rate": 0.708
+    },
+    "risk": {
+      "compared": 500,
+      "matches": 392,
+      "rate": 0.784
+    },
+    "priority": {
+      "compared": 500,
+      "matches": 384,
+      "rate": 0.768
+    },
+    "generation_disposition": {
+      "compared": 500,
+      "matches": 384,
+      "rate": 0.768
+    }
+  },
+  "class_metrics": {
+    "category": {
+      "classes": {
+        "Atendimento": {
+          "support": 57,
+          "predicted": 19,
+          "true_positive": 13,
+          "precision": 0.6842105263157895,
+          "recall": 0.22807017543859648,
+          "f1": 0.3421052631578948
+        },
+        "Cancelamento": {
+          "support": 55,
+          "predicted": 85,
+          "true_positive": 49,
+          "precision": 0.5764705882352941,
+          "recall": 0.8909090909090909,
+          "f1": 0.7
+        },
+        "Cobrança Indevida": {
+          "support": 139,
+          "predicted": 260,
+          "true_positive": 105,
+          "precision": 0.40384615384615385,
+          "recall": 0.7553956834532374,
+          "f1": 0.5263157894736842
+        },
+        "Fraude/Segurança": {
+          "support": 111,
+          "predicted": 34,
+          "true_positive": 16,
+          "precision": 0.47058823529411764,
+          "recall": 0.14414414414414414,
+          "f1": 0.22068965517241382
+        },
+        "Outros": {
+          "support": 43,
+          "predicted": 1,
+          "true_positive": 1,
+          "precision": 1,
+          "recall": 0.023255813953488372,
+          "f1": 0.04545454545454545
+        },
+        "Produto/Serviço": {
+          "support": 95,
+          "predicted": 101,
+          "true_positive": 29,
+          "precision": 0.2871287128712871,
+          "recall": 0.30526315789473685,
+          "f1": 0.29591836734693877
+        }
+      },
+      "macro_f1": 0.3550806034342462
+    },
+    "product": {
+      "classes": {
+        "Cartão de Crédito": {
+          "support": 88,
+          "predicted": 94,
+          "true_positive": 83,
+          "precision": 0.8829787234042553,
+          "recall": 0.9431818181818182,
+          "f1": 0.9120879120879122
+        },
+        "Conta Corrente": {
+          "support": 142,
+          "predicted": 105,
+          "true_positive": 95,
+          "precision": 0.9047619047619048,
+          "recall": 0.6690140845070423,
+          "f1": 0.7692307692307692
+        },
+        "Empréstimo": {
+          "support": 74,
+          "predicted": 87,
+          "true_positive": 72,
+          "precision": 0.8275862068965517,
+          "recall": 0.972972972972973,
+          "f1": 0.8944099378881988
+        },
+        "Investimentos": {
+          "support": 54,
+          "predicted": 34,
+          "true_positive": 34,
+          "precision": 1,
+          "recall": 0.6296296296296297,
+          "f1": 0.7727272727272727
+        },
+        "Não Identificado": {
+          "support": 96,
+          "predicted": 133,
+          "true_positive": 60,
+          "precision": 0.45112781954887216,
+          "recall": 0.625,
+          "f1": 0.5240174672489082
+        },
+        "Seguros": {
+          "support": 46,
+          "predicted": 47,
+          "true_positive": 39,
+          "precision": 0.8297872340425532,
+          "recall": 0.8478260869565217,
+          "f1": 0.8387096774193549
+        }
+      },
+      "macro_f1": 0.7851971727670692
+    },
+    "urgency": {
+      "classes": {
+        "Alta": {
+          "support": 82,
+          "predicted": 132,
+          "true_positive": 45,
+          "precision": 0.3409090909090909,
+          "recall": 0.5487804878048781,
+          "f1": 0.4205607476635514
+        },
+        "Baixa": {
+          "support": 10,
+          "predicted": 0,
+          "true_positive": 0,
+          "precision": 0,
+          "recall": 0,
+          "f1": 0
+        },
+        "Crítica": {
+          "support": 342,
+          "predicted": 299,
+          "true_positive": 282,
+          "precision": 0.9431438127090301,
+          "recall": 0.8245614035087719,
+          "f1": 0.8798751950078003
+        },
+        "Média": {
+          "support": 66,
+          "predicted": 69,
+          "true_positive": 27,
+          "precision": 0.391304347826087,
+          "recall": 0.4090909090909091,
+          "f1": 0.4
+        }
+      },
+      "macro_f1": 0.42510898566783795
+    },
+    "risk": {
+      "classes": {
+        "Alto": {
+          "support": 81,
+          "predicted": 67,
+          "true_positive": 40,
+          "precision": 0.5970149253731343,
+          "recall": 0.49382716049382713,
+          "f1": 0.5405405405405405
+        },
+        "Baixo": {
+          "support": 8,
+          "predicted": 0,
+          "true_positive": 0,
+          "precision": 0,
+          "recall": 0,
+          "f1": 0
+        },
+        "Crítico": {
+          "support": 332,
+          "predicted": 287,
+          "true_positive": 281,
+          "precision": 0.9790940766550522,
+          "recall": 0.8463855421686747,
+          "f1": 0.9079159935379644
+        },
+        "Médio": {
+          "support": 79,
+          "predicted": 146,
+          "true_positive": 71,
+          "precision": 0.4863013698630137,
+          "recall": 0.8987341772151899,
+          "f1": 0.6311111111111111
+        }
+      },
+      "macro_f1": 0.519891911297404
+    }
+  },
+  "threat_agreements": {
+    "pii_present": {
+      "compared": 500,
+      "matches": 443,
+      "rate": 0.886
+    },
+    "prompt_injection": {
+      "compared": 500,
+      "matches": 487,
+      "rate": 0.974
+    },
+    "exfiltration_request": {
+      "compared": 500,
+      "matches": 474,
+      "rate": 0.948
+    },
+    "unauthorized_data_access": {
+      "compared": 500,
+      "matches": 475,
+      "rate": 0.95
+    },
+    "external_exfiltration": {
+      "compared": 500,
+      "matches": 499,
+      "rate": 0.998
+    }
+  },
+  "confusion": {
+    "category": {
+      "Cobrança Indevida": {
+        "Cancelamento": 11,
+        "Cobrança Indevida": 105,
+        "Produto/Serviço": 19,
+        "Fraude/Segurança": 2,
+        "Atendimento": 2
+      },
+      "Cancelamento": {
+        "Cancelamento": 49,
+        "Cobrança Indevida": 3,
+        "Produto/Serviço": 3
+      },
+      "Atendimento": {
+        "Cobrança Indevida": 21,
+        "Produto/Serviço": 18,
+        "Atendimento": 13,
+        "Cancelamento": 2,
+        "Fraude/Segurança": 3
+      },
+      "Fraude/Segurança": {
+        "Cobrança Indevida": 67,
+        "Fraude/Segurança": 16,
+        "Produto/Serviço": 18,
+        "Cancelamento": 10
+      },
+      "Outros": {
+        "Fraude/Segurança": 6,
+        "Cobrança Indevida": 17,
+        "Produto/Serviço": 14,
+        "Cancelamento": 3,
+        "Atendimento": 2,
+        "Outros": 1
+      },
+      "Produto/Serviço": {
+        "Produto/Serviço": 29,
+        "Cobrança Indevida": 47,
+        "Cancelamento": 10,
+        "Atendimento": 2,
+        "Fraude/Segurança": 7
+      }
+    },
+    "product": {
+      "Empréstimo": {
+        "Empréstimo": 72,
+        "Conta Corrente": 2
+      },
+      "Investimentos": {
+        "Investimentos": 34,
+        "Não Identificado": 17,
+        "Cartão de Crédito": 2,
+        "Seguros": 1
+      },
+      "Cartão de Crédito": {
+        "Cartão de Crédito": 83,
+        "Não Identificado": 4,
+        "Conta Corrente": 1
+      },
+      "Conta Corrente": {
+        "Conta Corrente": 95,
+        "Não Identificado": 46,
+        "Seguros": 1
+      },
+      "Seguros": {
+        "Seguros": 39,
+        "Não Identificado": 6,
+        "Conta Corrente": 1
+      },
+      "Não Identificado": {
+        "Não Identificado": 60,
+        "Cartão de Crédito": 9,
+        "Empréstimo": 15,
+        "Seguros": 6,
+        "Conta Corrente": 6
+      }
+    },
+    "urgency": {
+      "Crítica": {
+        "Crítica": 282,
+        "Alta": 47,
+        "Média": 13
+      },
+      "Alta": {
+        "Alta": 45,
+        "Crítica": 13,
+        "Média": 24
+      },
+      "Média": {
+        "Média": 27,
+        "Alta": 35,
+        "Crítica": 4
+      },
+      "Baixa": {
+        "Alta": 5,
+        "Média": 5
+      }
+    },
+    "risk": {
+      "Crítico": {
+        "Crítico": 281,
+        "Alto": 21,
+        "Médio": 30
+      },
+      "Alto": {
+        "Médio": 37,
+        "Alto": 40,
+        "Crítico": 4
+      },
+      "Médio": {
+        "Médio": 71,
+        "Alto": 6,
+        "Crítico": 2
+      },
+      "Baixo": {
+        "Médio": 8
+      }
+    }
+  },
+  "benchmark_performance": {
+    "count": 500,
+    "average_decision_ms": 1416.0369879999996,
+    "p50_decision_ms": 1400.498,
+    "p95_decision_ms": 1770.205,
+    "p99_decision_ms": 2306.149,
+    "max_decision_ms": 5137.622,
+    "routing": {
+      "escalation_required": 315,
+      "priority_requested": 123,
+      "deferred": 62
+    }
+  }
+}

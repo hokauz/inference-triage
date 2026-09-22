@@ -19,6 +19,18 @@
 !/artifacts/v0-finguard/*/ingestion_report.json
 /artifacts/v0-finguard/*/benchmark.sqlite
 
+# Preserve public exports for Laya smoke/full runs; keep SQLite restricted.
+!/artifacts/v0-laya/
+!/artifacts/v0-laya/*/
+!/artifacts/v0-laya/*/benchmark_run.json
+!/artifacts/v0-laya/*/sample_executions.jsonl
+!/artifacts/v0-laya/*/ingestion_report.json
+!/artifacts/v0-laya/*/benchmark_checkpoint.json
+!/artifacts/v0-laya/*/benchmark_analysis.json
+/artifacts/v0-laya/*/benchmark.sqlite
+/artifacts/v0-laya-local/*/benchmark.sqlite
+/artifacts/*/*/review_queue.jsonl
+
 /datasets/source/*
 !/datasets/source/.gitkeep
 !/datasets/source/finguard/
@@ -38,3 +50,10 @@ datasets/source/finguard/*
 **/dist/
 **/build/
 **/coverage/
+
+# Temporary runtime session markers.
+*.ses
+
+# Laya ONNX weights are prepared locally and identified by the tracked manifest.
+/models/laya/multilingual/*
+!/models/laya/multilingual/.gitkeep

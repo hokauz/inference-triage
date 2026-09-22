@@ -13,5 +13,8 @@
   "devDependencies": {
     "@types/node": "^25.0.0",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@receptron/laya": "0.1.2"
   }
 }

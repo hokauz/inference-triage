@@ -1,4 +1,5 @@
-import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { createReadStream, readdirSync, readFileSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { sha256 } from "./hashing.js";
@@ -85,4 +86,19 @@ export function fileHash(path: string): string {
 
 export function promptHash(paths: string[]): string {
   return sha256(paths.map((path) => readFileSync(path, "utf8")).join("\n---\n"));
+}
+
+export async function modelBundleHash(directory: string): Promise<string> {
+  const hash = createHash("sha256");
+  const visit = async (path: string, relative: string): Promise<void> => {
+    const stat = statSync(path);
+    if (stat.isDirectory()) {
+      for (const entry of readdirSync(path).sort()) await visit(`${path}/${entry}`, `${relative}/${entry}`);
+      return;
+    }
+    hash.update(relative);
+    for await (const chunk of createReadStream(path)) hash.update(chunk);
+  };
+  await visit(directory, "");
+  return hash.digest("hex");
 }

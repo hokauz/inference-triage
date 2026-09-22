@@ -5,3 +5,4 @@ artifacts
 var
 datasets/source
 datasets/fixtures/finguard/reclamacoes-smoke.csv
+models/laya/multilingual

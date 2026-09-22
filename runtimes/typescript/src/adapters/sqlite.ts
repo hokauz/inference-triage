@@ -36,12 +36,25 @@ export interface PublicSample {
   dataClass: "report_public";
 }
 
+export interface ReviewInput {
+  status: "pending" | "accepted" | "corrected" | "rejected";
+  reviewer?: string;
+  reason?: string;
+  category?: string;
+  product?: string;
+  urgency?: string;
+  risk?: string;
+}
+
 export class SqliteRunStore {
   private readonly db: DatabaseSync;
 
   constructor(databasePath: string, workspaceRoot: string) {
     this.db = new DatabaseSync(databasePath);
     this.db.exec(readFileSync(join(workspaceRoot, "platform/database/migrations/0001_v0.sql"), "utf8"));
+    const columns = new Set((this.db.prepare("PRAGMA table_info(sample_execution)").all() as Array<{ name: string }>).map((column) => column.name));
+    if (!columns.has("model_output_json")) this.db.exec("ALTER TABLE sample_execution ADD COLUMN model_output_json TEXT");
+    if (!columns.has("policy_reasons_json")) this.db.exec("ALTER TABLE sample_execution ADD COLUMN policy_reasons_json TEXT");
   }
 
   beginRun(metadata: RunMetadata): void {
@@ -51,10 +64,13 @@ export class SqliteRunStore {
         dataset_hash, taxonomy_hash, policy_hash, prompt_hash, config_hash,
         decision_model, runtime_name, runtime_version, execution_profile,
         cpu_limit, memory_limit_mib, concurrency, image_digest,
+        model_package, model_revision, model_hash, model_dir, execution_provider, onnx_threads, model_load_ms,
         pipeline_config_json, started_at
-      ) VALUES (?, 'running', 'internal_restricted', ?, ?, ?, ?, ?, ?, ?, ?, ?, 'node', ?, ?, ?, ?, ?, ?, ?, ?)`
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       metadata.id,
+      "running",
+      "internal_restricted",
       metadata.pack.id,
       metadata.pack.version,
       metadata.gitCommit,
@@ -64,12 +80,20 @@ export class SqliteRunStore {
       metadata.promptHash,
       metadata.configHash,
       metadata.decisionModel,
+      "node",
       metadata.runtimeVersion,
       metadata.environment.profile,
       metadata.environment.cpuLimit,
       metadata.environment.memoryLimitMiB,
       metadata.environment.concurrency,
       metadata.environment.imageDigest,
+      metadata.environment.modelPackage ?? null,
+      metadata.environment.modelRevision ?? null,
+      metadata.environment.modelHash ?? null,
+      metadata.environment.modelDir ?? null,
+      metadata.environment.executionProvider ?? null,
+      metadata.environment.onnxThreads ?? null,
+      metadata.environment.modelLoadMs ?? null,
       JSON.stringify(metadata.pipelineConfig),
       metadata.startedAt,
     );
@@ -93,8 +117,8 @@ export class SqliteRunStore {
     this.db.prepare(
       `INSERT INTO sample_execution (
         run_id, sample_id, category, product, urgency, risk, threats_json, confidence_json,
-        priority, generation_disposition, public_summary, decision_ms
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        priority, generation_disposition, public_summary, decision_ms, model_output_json, policy_reasons_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       runId,
       complaint.id,
@@ -108,11 +132,30 @@ export class SqliteRunStore {
       decision.routing.generationDisposition,
       decision.publicSummary,
       decision.decisionMs,
+      JSON.stringify(decision.modelOutput ?? null),
+      JSON.stringify(decision.policyReasons ?? []),
     );
+    this.db.prepare(
+      `INSERT OR IGNORE INTO sample_feedback (run_id, sample_id, review_status)
+       VALUES (?, ?, 'pending')`
+    ).run(runId, complaint.id);
   }
 
   completeRun(runId: string, finishedAt: string): void {
     this.db.prepare("UPDATE benchmark_run SET status = 'completed', finished_at = ? WHERE id = ?").run(finishedAt, runId);
+  }
+
+  recordReview(runId: string, sampleId: string, review: ReviewInput): void {
+    const reviewedAt = new Date().toISOString();
+    this.db.prepare(
+      `UPDATE sample_feedback SET review_status = ?, reviewed_category = ?, reviewed_product = ?,
+        reviewed_urgency = ?, reviewed_risk = ?, reviewer = ?, reviewed_at = ?, review_reason = ?
+       WHERE run_id = ? AND sample_id = ?`
+    ).run(review.status, review.category ?? null, review.product ?? null, review.urgency ?? null, review.risk ?? null, review.reviewer ?? null, reviewedAt, review.reason ?? null, runId, sampleId);
+    this.db.prepare(
+      `INSERT INTO review_events (run_id, sample_id, event_type, payload_json, reviewer, created_at)
+       VALUES (?, ?, ?, ?, ?, ?)`
+    ).run(runId, sampleId, review.status === "corrected" ? "label_corrected" : "reviewed", JSON.stringify(review), review.reviewer ?? null, reviewedAt);
   }
 
   publicSamples(runId: string): PublicSample[] {
@@ -142,7 +185,9 @@ export class SqliteRunStore {
     const row = this.db.prepare(
       `SELECT id, status, pack_id, pack_version, git_commit, dataset_hash, taxonomy_hash,
         policy_hash, prompt_hash, config_hash, decision_model, runtime_name, runtime_version,
-        execution_profile, cpu_limit, memory_limit_mib, concurrency, image_digest, started_at, finished_at
+        execution_profile, cpu_limit, memory_limit_mib, concurrency, image_digest,
+        model_package, model_revision, model_hash, model_dir, execution_provider, onnx_threads, model_load_ms,
+        started_at, finished_at
        FROM benchmark_run WHERE id = ?`
     ).get(runId) as Record<string, unknown> | undefined;
     if (!row) throw new Error(`run not found: ${runId}`);

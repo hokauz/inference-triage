@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import { sha256 } from "./hashing.js";
+import { sha256, textHash } from "./hashing.js";
 import type { IngestedComplaint, IngestionReport, RejectedRow, Taxonomy } from "./types.js";
 
 const requiredHeaders = ["id", "data_reclamacao", "canal", "texto_reclamacao", "produto", "status"];
@@ -108,7 +108,7 @@ export function ingestCsv(path: string, taxonomy: Taxonomy): IngestionResult {
       rawText: values.texto_reclamacao,
       sourceProduct: values.produto || null,
       sourceStatus: values.status,
-      textHash: sha256(values.texto_reclamacao),
+      textHash: textHash(values.texto_reclamacao),
     });
   }
 

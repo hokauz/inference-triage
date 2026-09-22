@@ -20,6 +20,13 @@ CREATE TABLE IF NOT EXISTS benchmark_run (
   memory_limit_mib INTEGER NOT NULL,
   concurrency INTEGER NOT NULL,
   image_digest TEXT,
+  model_package TEXT,
+  model_revision TEXT,
+  model_hash TEXT,
+  model_dir TEXT,
+  execution_provider TEXT,
+  onnx_threads INTEGER,
+  model_load_ms REAL,
   pipeline_config_json TEXT NOT NULL,
   started_at TEXT NOT NULL,
   finished_at TEXT
@@ -51,6 +58,8 @@ CREATE TABLE IF NOT EXISTS sample_execution (
   generation_disposition TEXT NOT NULL,
   public_summary TEXT NOT NULL,
   decision_ms REAL NOT NULL,
+  model_output_json TEXT,
+  policy_reasons_json TEXT,
   PRIMARY KEY (run_id, sample_id),
   FOREIGN KEY (run_id, sample_id) REFERENCES sample_restricted(run_id, sample_id)
 );
@@ -70,6 +79,79 @@ SELECT
   e.public_summary,
   e.decision_ms,
   'report_public' AS data_class
+FROM sample_execution AS e;
+
+CREATE TABLE IF NOT EXISTS sample_feedback (
+  run_id TEXT NOT NULL,
+  sample_id TEXT NOT NULL,
+  review_status TEXT NOT NULL DEFAULT 'pending',
+  reviewed_category TEXT,
+  reviewed_product TEXT,
+  reviewed_urgency TEXT,
+  reviewed_risk TEXT,
+  reviewer TEXT,
+  reviewed_at TEXT,
+  review_reason TEXT,
+  data_class TEXT NOT NULL DEFAULT 'internal_restricted',
+  PRIMARY KEY (run_id, sample_id),
+  FOREIGN KEY (run_id, sample_id) REFERENCES sample_restricted(run_id, sample_id)
+);
+
+CREATE TABLE IF NOT EXISTS label_candidates (
+  candidate_id TEXT PRIMARY KEY,
+  source_run_id TEXT NOT NULL,
+  dataset_hash TEXT NOT NULL,
+  candidate_path TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'candidate',
+  created_at TEXT NOT NULL,
+  promoted_at TEXT,
+  promoted_by TEXT
+);
+
+CREATE TABLE IF NOT EXISTS review_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  run_id TEXT NOT NULL,
+  sample_id TEXT NOT NULL,
+  event_type TEXT NOT NULL,
+  payload_json TEXT NOT NULL,
+  reviewer TEXT,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (run_id, sample_id) REFERENCES sample_restricted(run_id, sample_id)
+);
+
+CREATE TABLE IF NOT EXISTS dataset_versions (
+  dataset_hash TEXT PRIMARY KEY,
+  dataset_path TEXT NOT NULL,
+  dataset_kind TEXT NOT NULL,
+  parent_dataset_hash TEXT,
+  review_status TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  approved_at TEXT,
+  approved_by TEXT
+);
+
+CREATE VIEW IF NOT EXISTS review_queue AS
+SELECT
+  e.run_id,
+  e.sample_id,
+  e.category,
+  e.product,
+  e.urgency,
+  e.risk,
+  e.confidence_json,
+  e.priority,
+  e.generation_disposition,
+  e.model_output_json,
+  e.policy_reasons_json,
+  CASE
+    WHEN e.product = 'Não Identificado' THEN 'unknown_product'
+    WHEN json_extract(e.confidence_json, '$.category') < 0.6 THEN 'low_category_confidence'
+    WHEN json_extract(e.confidence_json, '$.product') < 0.6 THEN 'low_product_confidence'
+    WHEN json_extract(e.confidence_json, '$.urgency') < 0.6 THEN 'low_urgency_confidence'
+    WHEN e.priority >= 100 THEN 'critical_priority'
+    ELSE 'policy_or_label_divergence'
+  END AS review_reason,
+  'internal_restricted' AS data_class
 FROM sample_execution AS e;
 
 CREATE VIEW IF NOT EXISTS report_run_metrics AS

@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 import { runV0 } from "../runner/v0.js";
 
 function usage(): void {
-  console.log("usage: v0.js run --input <csv> --output-dir <dir> --pack <pack.yaml> --mode mock");
+  console.log("usage: v0.js run --input <csv> --output-dir <dir> --pack <pack.yaml> --mode mock|laya [--model-dir <dir>]");
 }
 
 function readOptions(argumentsList: string[]): Record<string, string> {
@@ -36,12 +36,13 @@ try {
   if (!options.input || !options["output-dir"] || !options.pack || !options.mode) {
     throw new Error("--input, --output-dir, --pack and --mode are required");
   }
-  if (options.mode !== "mock") throw new Error(`unsupported mode: ${options.mode}`);
-  const result = runV0({
+  if (options.mode !== "mock" && options.mode !== "laya") throw new Error(`unsupported mode: ${options.mode}`);
+  const result = await runV0({
     inputPath: resolve(options.input),
     outputDir: resolve(options["output-dir"]),
     packPath: resolve(options.pack),
-    mode: "mock",
+    mode: options.mode,
+    modelDir: options["model-dir"],
   });
   console.log(JSON.stringify({ status: "completed", runId: result.runId, outputDir: result.outputDir }));
 } catch (error) {

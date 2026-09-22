@@ -45,6 +45,9 @@ check_structure() {
   require_file compose/benchmarks/v0-mock/Dockerfile || return 1
   require_file compose/benchmarks/v0-mock/compose.yaml || return 1
   require_file compose/benchmarks/v0-finguard/compose.yaml || return 1
+  require_file compose/benchmarks/v0-laya/compose.yaml || return 1
+  require_file models/laya/README.md || return 1
+  require_file models/laya/manifest.json || return 1
   pass 'repository structure'
 }
 

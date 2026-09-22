@@ -121,9 +121,49 @@ Esse perfil lê `datasets/source/finguard/dataset_finguard_desafio_3.csv` como
 volume somente leitura e grava os resultados em
 `artifacts/v0-finguard/full/`.
 
+O adapter Laya real exige um bundle ONNX local em
+`models/laya/multilingual/`. Prepare e valide o bundle com os alvos do
+Makefile:
+
+```bash
+make prepare-laya-model LAYA_REVISION=<revision-ou-main>
+make check-laya-model
+make laya-smoke
+make benchmark-laya LAYA_MODEL_REVISION=<revision> LAYA_MODEL_HASH=<sha256>
+# perfil local mais rápido: 4 CPUs, 8 GiB, 4 threads ONNX
+make laya-local-smoke
+make benchmark-laya-local LAYA_MODEL_REVISION=<revision> LAYA_MODEL_HASH=<sha256>
+```
+
+`v0-laya` permanece como baseline oficial (1 CPU/3 GiB). `v0-laya-local` é
+um envelope separado para iteração rápida (4 CPUs/8 GiB/4 threads), gravando
+em `artifacts/v0-laya-local/`; seus números não devem ser comparados
+diretamente com a baseline oficial.
+
+`prepare-laya-model` baixa o bundle para um cache temporário, copia os cinco
+arquivos esperados para o diretório local e atualiza `models/laya/manifest.json`
+com tamanho e SHA-256. `check-laya-model` apenas valida os arquivos e hashes;
+ele não baixa nada. Sem esse diretório, os comandos falham explicitamente antes
+de iniciar o run. O padrão usa o bundle na raiz de
+`receptron/laya-onnx`; variantes que realmente possuem subpasta podem ser
+selecionadas com `LAYA_REPO` e `LAYA_SUBFOLDER`.
+
+O Laya é executado pelo perfil Docker para isolar `onnxruntime-node` e seus
+scripts nativos do sistema local. O host não precisa instalar Python nem
+carregar o modelo; ele apenas fornece o bundle ONNX por volume somente leitura.
+O mock continua usando o envelope menor de 512 MiB. O perfil Laya começa com
+3 GiB e deverá ser recalibrado após medir startup, carga do modelo e pico de
+memória.
+
 Cada run produz `benchmark.sqlite`, `benchmark_run.json`,
-`sample_executions.jsonl` e `ingestion_report.json`. O texto bruto só vive na
+`sample_executions.jsonl`, `ingestion_report.json` e
+`benchmark_checkpoint.json`. O texto bruto só vive na
 tabela SQLite restrita; os arquivos JSON/JSONL derivam das views públicas.
+
+Durante a execução, o runner escreve progresso em stderr a cada 25 amostras
+(`INFERENCE_TRIAGE_PROGRESS_INTERVAL` pode alterar o intervalo) e atualiza o
+checkpoint atomicamente após cada amostra. Em caso de falha, o checkpoint fica
+com `status: failed` e a quantidade processada.
 
 ## Papéis dos modelos
 

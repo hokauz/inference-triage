@@ -60,11 +60,19 @@ export interface DecisionResult {
   routing: RoutingDecision;
   publicSummary: string;
   decisionMs: number;
+  modelOutput?: {
+    category: string;
+    product: string;
+    urgency: string;
+    confidence: DecisionConfidence;
+  };
+  policyReasons?: string[];
 }
 
 export interface DecisionModel {
   readonly id: string;
-  decide(complaint: IngestedComplaint, taxonomy: Taxonomy): DecisionResult;
+  decide(complaint: IngestedComplaint, taxonomy: Taxonomy): Promise<DecisionResult>;
+  close?(): Promise<void> | void;
 }
 
 export interface Taxonomy {
@@ -93,4 +101,11 @@ export interface ExecutionEnvironment {
   memoryLimitMiB: number;
   concurrency: number;
   imageDigest: string | null;
+  modelPackage?: string;
+  modelRevision?: string | null;
+  modelHash?: string | null;
+  modelDir?: string | null;
+  executionProvider?: string;
+  onnxThreads?: number;
+  modelLoadMs?: number;
 }

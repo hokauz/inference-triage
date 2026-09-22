@@ -7,11 +7,11 @@ import { join, resolve } from "node:path";
 
 import { runV0 } from "../src/runner/v0.js";
 
-test("V0 persists restricted inputs while exporting only public views", () => {
+test("V0 persists restricted inputs while exporting only public views", async () => {
   const outputDir = mkdtempSync(join(tmpdir(), "inference-triage-v0-test-"));
   const root = resolve(process.cwd());
   try {
-    runV0({
+    await runV0({
       inputPath: resolve(root, "checks/e2e/v0/fixtures/security.csv"),
       outputDir,
       packPath: resolve(root, "assets/packs/finguard/pack.yaml"),
